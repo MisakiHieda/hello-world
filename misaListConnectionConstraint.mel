@@ -1,0 +1,313 @@
+//I use Maya 2014
+//updated: 30/12/2019
+//
+global proc misaListConnectionConstraint()
+{
+if ((`window -ex ListConnectionConstraint_Window`) == true)deleteUI ListConnectionConstraint_Window;
+string $window = `window -title "ListConnectionConstraint" ListConnectionConstraint_Window`;
+columnLayout;
+global string $radioCollection1; 
+global string $radioCollection2;  
+global string $radioCollectionSlHi;
+global string $checkBox1;
+global string $checkBox2;
+global string $checkBox3;
+global string $checkBox4;
+global string $checkBox5;
+global string $checkBox6;
+global string $checkBox7;
+global string $checkBox8;
+global string $checkBox10;
+global string $checkBox11;
+rowLayout -nc 2; 
+$radioCollectionSlHi = `radioCollection`;
+radioButton -w 100 -label "selection" -select radioButtonSl;
+radioButton -w 100 -label "hierarchy" radioButtonHi;  
+setParent..;
+rowLayout -nc 2;
+textScrollList -h 600 -w 240 -ams true Source_List; 
+textScrollList -h 600 -w 240 -ams true Target_List;
+setParent..;
+rowLayout -nc 4;
+$radioCollection1 = `radioCollection`;
+radioButton -w 120 -label "transform" -select radioButton1;
+radioButton -w 120 -label "Joint"  radioButton2;
+$radioCollection2 = `radioCollection`;
+radioButton -w 120 -label "transform" -select radioButton3;
+radioButton -w 120 -label "Joint"  radioButton4;
+
+setParent..;
+rowLayout -nc 5;
+button -w 240 -l "ソースリスト" -c "misaSourceList" ;
+button -w 240 -l "ターゲットリスト" -c "misaTargetList" ;
+
+setParent..;
+rowLayout -nc 5;
+button -w 240 -l "クリア" -c "SourceListRemov_M" ;
+button -w 240 -l "クリア" -c "TargetListRemov_M" ;
+setParent..;
+text "";
+setParent..;
+rowLayout -nc 12;
+$checkBox1 = `checkBox  -w 29 -value 1 -label "T"` ;
+$checkBox2 = `checkBox  -w 29 -value 1 -label "R"`;
+$checkBox3 = `checkBox  -w 95 -label "S"`;
+
+$checkBox4 = `checkBox  -w 29 -value 1 -label "T"` ;
+$checkBox5 = `checkBox  -w 29 -value 1 -label "R"`;
+$checkBox6 = `checkBox  -w 43 -label "S"`;
+$checkBox10 = `checkBox  -w 55 -label "offset"`;
+
+$checkBox7 = `checkBox  -w 29 -value 1 -label "T"` ;
+$checkBox8 = `checkBox  -w 43 -value 1 -label "R"`;
+$checkBox11 =`checkBox  -w 55 -value 1 -label "offset"`;
+
+setParent..;
+rowLayout -nc 5;
+button -w 159 -l "コネクション！" -c "misaConnection" ;
+button -w 159 -l "コンスト！" -c "misaConstraint" ;
+button -w 159 -l "ペアレント！" -c "misaParentConstraint" ;
+setParent..;
+showWindow;
+}
+global proc misaSourceList()
+{
+    global string $radioCollectionSlHi;
+    string $radinSlHi = `radioCollection -query -select $radioCollectionSlHi`;
+    if($radinSlHi == "radioButtonSl")
+    {
+        select ;
+    }
+    else if($radinSlHi == "radioButtonHi")
+    {
+    select -hi ;
+    }
+    global string $SourceList[];
+    global string $radioCollection1;
+    string $radiname = `radioCollection -query -select $radioCollection1`;
+    if($radiname == "radioButton1")
+    {
+    $SourceList =`ls -sl -type transform`;
+    }
+    else if($radiname == "radioButton2")
+    {
+    $SourceList =`ls -sl -type joint`;
+    }    
+    for($Source in $SourceList)
+        { 
+           textScrollList -e -a $Source Source_List;
+           //print $Source;
+           //print "\n";                      
+        }
+     select -clear ;
+}
+global proc misaTargetList()
+{
+    global string $radioCollectionSlHi;
+    string $radinSlHi = `radioCollection -query -select $radioCollectionSlHi`;
+    if($radinSlHi == "radioButtonSl")
+    {
+        select ;
+    }
+    else if($radinSlHi == "radioButtonHi")
+    {
+    select -hi ;
+    }
+    global string $TargetList[];
+    global string $radioCollection2;
+    string $radiname = `radioCollection -query -select $radioCollection2`;
+    if($radiname == "radioButton3")
+    {
+    $TargetList =`ls -sl -type transform`;
+    }
+    else if($radiname == "radioButton4")
+    {
+    $TargetList =`ls -sl -type joint`;
+    }
+    for($Target in $TargetList)
+        {
+           textScrollList  -e -a $Target Target_List;          
+           //print $Target;
+           //print "\n";                      
+        }
+     select -clear ;
+}
+
+global proc SourceListRemov_M()
+{ 
+           textScrollList -e -removeAll Source_List;                 
+}
+
+global proc TargetListRemov_M()
+{ 
+           textScrollList -e -removeAll Target_List;                 
+}
+
+global proc misaConnection()
+{
+    global string $checkBox1;
+	global string $checkBox2;
+	global string $checkBox3;
+    string $SourceL[]=`textScrollList -q -ai Source_List`;
+    string $TargetL[]=`textScrollList -q -ai Target_List`;
+    int $SourceN =`textScrollList -q -numberOfItems Source_List`;
+    int $TargetN =`textScrollList -q -numberOfItems Target_List`;
+    if($SourceN == $TargetN)
+        {
+            int $i;
+            $i=0;
+            for($Sour in $SourceL)
+            {
+                if(`checkBox -q -value $checkBox1`)
+                {
+                connectAttr -f ($SourceL[$i]+".t") ($TargetL[$i]+".t");
+                } 
+                if(`checkBox -q -value $checkBox2`)
+                { 
+                connectAttr -f ($SourceL[$i]+".r") ($TargetL[$i]+".r");
+                }
+                if(`checkBox -q -value $checkBox2`)
+                {
+                connectAttr -f ($SourceL[$i]+".s") ($TargetL[$i]+".s"); 
+                } 
+                $i++;        
+            }
+        }
+    else
+        {
+        error -sl on "Number of lists does not match";
+        print "\n";
+        }
+};
+global proc misaConstraint()
+{
+    global string $checkBox4;
+	global string $checkBox5;
+	global string $checkBox6;
+	global string $checkBox10;
+    string $SourceL[]=`textScrollList -q -ai Source_List`;
+    string $TargetL[]=`textScrollList -q -ai Target_List`;
+    int $SourceN =`textScrollList -q -numberOfItems Source_List`;
+    int $TargetN =`textScrollList -q -numberOfItems Target_List`;
+    if($SourceN == $TargetN)
+        {
+        int $i;
+        $i=0;
+        for($Sour in $SourceL)
+            {
+                if(`checkBox -q -value $checkBox10`)
+                {
+                    if(`checkBox -q -value $checkBox4`)
+                    {
+                    pointConstraint -mo $SourceL[$i] $TargetL[$i];
+                    }
+                    if(`checkBox -q -value $checkBox5`)
+                    {
+                    orientConstraint -mo $SourceL[$i] $TargetL[$i];
+                    }
+                    if(`checkBox -q -value $checkBox6`)
+                    {
+                    scaleConstraint -mo $SourceL[$i] $TargetL[$i];
+                    }
+                }
+                else
+                {
+                    if(`checkBox -q -value $checkBox4`)
+                    {
+                    pointConstraint  $SourceL[$i] $TargetL[$i];
+                    }
+                    if(`checkBox -q -value $checkBox5`)
+                    {
+                    orientConstraint  $SourceL[$i] $TargetL[$i];
+                    }
+                    if(`checkBox -q -value $checkBox6`)
+                    {
+                    scaleConstraint  $SourceL[$i] $TargetL[$i];
+                    }
+                }                
+                $i++;        
+            }
+        }
+    else
+        {
+        error -sl on "Number of lists does not match";
+        print "\n";
+        }
+};
+
+global proc misaParentConstraint()
+{
+    global string $checkBox7;
+	global string $checkBox8;
+	global string $checkBox11;
+    string $SourceL[]=`textScrollList -q -ai Source_List`;
+    string $TargetL[]=`textScrollList -q -ai Target_List`;
+    int $SourceN =`textScrollList -q -numberOfItems Source_List`;
+    int $TargetN =`textScrollList -q -numberOfItems Target_List`;
+    if($SourceN == $TargetN)
+    {
+        int $i;
+        $i=0;
+        for($Sour in $SourceL)
+        {
+                if(`checkBox -q -value $checkBox11`)
+                {
+                   
+                    if(`checkBox -q -value $checkBox7`&&`checkBox -q -value $checkBox8`)
+                    {
+                     print test1;
+                    parentConstraint -mo $SourceL[$i] $TargetL[$i];
+                    }
+                                        
+                    else if(`checkBox -q -value $checkBox7`==0 && `checkBox -q -value $checkBox8`)
+                    {
+                     print test2;
+                    parentConstraint -skipTranslate x -st y -st z -mo $SourceL[$i] $TargetL[$i];
+                    }
+                    
+                    else if(`checkBox -q -value $checkBox7` && `checkBox -q -value $checkBox8`==0)
+                    {
+                     print test2;
+                    parentConstraint -skipRotate x -sr y -sr z -mo $SourceL[$i] $TargetL[$i];
+                    }
+                    else if(`checkBox -q -value $checkBox7`==0 && `checkBox -q -value $checkBox8`==0)
+                    {
+                        print "Check box is missing";
+                        print "\n";
+                    }
+                    
+                }
+                else
+                {
+                    if(`checkBox -q -value $checkBox7`&&`checkBox -q -value $checkBox8`)
+                    {
+                     print test1;
+                    parentConstraint $SourceL[$i] $TargetL[$i];
+                    }
+                                        
+                    else if(`checkBox -q -value $checkBox7`==0 && `checkBox -q -value $checkBox8`)
+                    {
+                     print test2;
+                    parentConstraint -skipTranslate x -st y -st z $SourceL[$i] $TargetL[$i];
+                    }
+                    
+                    else if(`checkBox -q -value $checkBox7` && `checkBox -q -value $checkBox8`==0)
+                    {
+                     print test2;
+                    parentConstraint -skipRotate x -sr y -sr z  $SourceL[$i] $TargetL[$i];
+                    }
+                    else if(`checkBox -q -value $checkBox7`==0 && `checkBox -q -value $checkBox8`==0)
+                    {
+                        print "Check box is missing";
+                        print "\n";
+                    }
+                }               
+                $i++;        
+        }
+    }
+    else
+    {
+        error -sl on "Number of lists does not match";
+        print "\n";
+    }
+}
